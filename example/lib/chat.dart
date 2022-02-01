@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:example/models/my_message.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -88,14 +89,21 @@ class _ChatPageState extends State<ChatPage> {
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
-        final message = types.PartialFile(
+        final fileMessage = types.PartialFile(
           mimeType: lookupMimeType(filePath),
           name: name,
           size: result.files.single.size,
           uri: uri,
         );
 
-        FirebaseChatCore.instance.sendMessage(message, widget.room.id);
+        final message = MyFileMessage.fromPartial(
+          author:
+              types.User(id: OurFirebaseChatCore.instance.firebaseUser!.uid),
+          id: '',
+          partialFile: fileMessage,
+        );
+
+        OurFirebaseChatCore.instance.sendMessage(message, widget.room.id);
         _setAttachmentUploading(false);
       } finally {
         _setAttachmentUploading(false);
@@ -123,7 +131,7 @@ class _ChatPageState extends State<ChatPage> {
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
-        final message = types.PartialImage(
+        final messageImage = types.PartialImage(
           height: image.height.toDouble(),
           name: name,
           size: size,
@@ -131,7 +139,14 @@ class _ChatPageState extends State<ChatPage> {
           width: image.width.toDouble(),
         );
 
-        FirebaseChatCore.instance.sendMessage(
+        final message = MyImageMessage.fromPartial(
+          author:
+              types.User(id: OurFirebaseChatCore.instance.firebaseUser!.uid),
+          id: '',
+          partialImage: messageImage,
+        );
+
+        OurFirebaseChatCore.instance.sendMessage(
           message,
           widget.room.id,
         );
@@ -173,8 +188,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handleSendPressed(types.PartialText message) {
-    FirebaseChatCore.instance.sendMessage(
-      message,
+    final textMessage = MyTextMessage.fromPartial(
+      author: types.User(id: OurFirebaseChatCore.instance.firebaseUser!.uid),
+      id: '',
+      partialText: message,
+    );
+
+    OurFirebaseChatCore.instance.sendMessage(
+      textMessage,
       widget.room.id,
     );
   }

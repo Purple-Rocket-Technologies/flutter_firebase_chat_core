@@ -438,3 +438,32 @@ class FirebaseChatCore {
         );
   }
 }
+
+class OurFirebaseChatCore extends FirebaseChatCore {
+  OurFirebaseChatCore._privateConstructor() : super._privateConstructor();
+
+  static final OurFirebaseChatCore instance =
+      OurFirebaseChatCore._privateConstructor();
+
+  /// Creates a new message document in Firebase collection.
+  /// [roomId], [authorAt], [createdAt] and ['updatedAt] fields are updated,
+  /// since they are required for fetching messages.
+  /// Other fields in [partialMessage] parameter are sent as it is.
+  @override
+  void sendMessage(
+    covariant types.Message partialMessage,
+    String roomId,
+  ) async {
+    final messageMap = partialMessage.toJson();
+
+    messageMap['roomId'] = roomId;
+    messageMap.removeWhere((key, value) => key == 'author' || key == 'id');
+    messageMap['authorId'] = firebaseUser!.uid;
+    messageMap['createdAt'] = FieldValue.serverTimestamp();
+    messageMap['updatedAt'] = FieldValue.serverTimestamp();
+
+    await getFirebaseFirestore()
+        .collection('${config.roomsCollectionName}/$roomId/messages')
+        .add(messageMap);
+  }
+}
